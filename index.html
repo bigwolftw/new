@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton's Second Law - Cinematic Explanation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Roboto:wght@300;400;500&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- 基础设置 --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1a1a; /* 画布外背景 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Roboto', 'Noto Serif SC', sans-serif;
+        }
+
+        /* --- 电影视窗 (16:9) --- */
+        #stage {
+            width: 100%;
+            max-width: 1200px;
+            aspect-ratio: 16/9;
+            background-color: #FDFCF5; /* 暖米色背景 */
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border-radius: 8px;
+        }
+
+        /* --- 背景元素 --- */
+        .bg-grid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(200, 200, 200, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 200, 200, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            top: -50%;
+            left: -50%;
+            z-index: 0;
+        }
+        
+        .floor-line {
+            position: absolute;
+            bottom: 25%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
+        /* --- 核心物体 --- */
+        .object-container {
+            position: absolute;
+            bottom: 25%;
+            left: 50%;
+            transform: translate(-50%, 0); /* 初始居中 */
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .cube {
+            width: 100px;
+            height: 100px;
+            background: #5D9CEC; /* 柔和蓝 */
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(93, 156, 236, 0.3);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: white;
+            z-index: 2;
+        }
+
+        .cube-shadow {
+            width: 100px;
+            height: 10px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 50%;
+            position: absolute;
+            bottom: -15px;
+            left: 0;
+            transform: scale(0.9);
+            filter: blur(4px);
+            z-index: 1;
+        }
+
+        /* --- 力 (箭头) --- */
+        .force-arrow {
+            position: absolute;
+            top: 50%;
+            right: 110%; /* 在方块左侧 */
+            height: 4px;
+            width: 0px; /* 初始长度为0 */
+            background: #FC6E51; /* 珊瑚红 */
+            transform: translateY(-50%);
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+        }
+
+        .force-arrow::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: -6px;
+            border-width: 8px 0 8px 12px;
+            border-style: solid;
+            border-color: transparent transparent transparent #FC6E51;
+        }
+
+        .force-label {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FC6E51;
+            font-weight: bold;
+            font-size: 1.2rem;
+            opacity: 0;
+        }
+
+        /* --- 加速度可视化 (速度线) --- */
+        .wind-lines {
+            position: absolute;
+            right: -50px;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            opacity: 0;
+        }
+        .wind-line {
+            height: 2px;
+            background: #ccc;
+            margin: 15px 0;
+            width: 100%;
+            border-radius: 2px;
+        }
+
+        /* --- 公式展示区 --- */
+        .formula-overlay {
+            position: absolute;
+            top: 20%;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .formula-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            color: #434A54;
+            opacity: 0;
+            display: inline-block;
+        }
+        
+        .variable { display: inline-block; position: relative; }
+        .var-f { color: #FC6E51; }
+        .var-m { color: #5D9CEC; }
+        .var-a { color: #48CFAD; } /* 青色 */
+
+        /* --- 字幕与UI --- */
+        .cinematic-bar {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            background: #1a1a1a;
+            z-index: 100;
+        }
+        .bar-top { top: 0; height: 0; } /* 初始关闭，动画开启 */
+        .bar-bottom { bottom: 0; height: 12%; display: flex; align-items: center; justify-content: center; flex-direction: column;}
+
+        .subtitle-cn {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+        .subtitle-en {
+            color: #aaaaaa;
+            font-size: 0.9rem;
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        /* --- 标题卡 --- */
+        .title-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #FDFCF5;
+            z-index: 50;
+        }
+        .main-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            color: #434A54;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .sub-title {
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.2rem;
+            color: #AAB2BD;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        /* --- 辅助标记 --- */
+        .measurement {
+            position: absolute;
+            bottom: -30px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #AAB2BD;
+            opacity: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="stage">
+        <!-- 背景 -->
+        <div class="bg-grid"></div>
+        <div class="floor-line"></div>
+
+        <!-- 标题画面 -->
+        <div class="title-card">
+            <div class="main-title">牛頓第二運動定律｜Newton's Second Law</div>
+            <div class="sub-title">The Dynamics of Motion</div>
+        </div>
+
+        <!-- 公式展示 -->
+        <div class="formula-overlay">
+            <div class="formula-text">
+                <span class="variable var-f">F</span> = 
+                <span class="variable var-m">m</span>
+                <span class="variable var-a">a</span>
+            </div>
+        </div>
+
+        <!-- 物理对象 -->
+        <div class="object-container" id="obj">
+            <div class="force-arrow" id="arrow">
+                <div class="force-label">F</div>
+            </div>
+            <div class="cube" id="cube">m</div>
+            <div class="cube-shadow" id="shadow"></div>
+            <div class="measurement">Mass</div>
+            
+            <div class="wind-lines">
+                <div class="wind-line"></div>
+                <div class="wind-line"></div>
+                <div class="wind-line"></div>
+            </div>
+        </div>
+
+        <!-- 电影黑边与字幕 -->
+        <div class="cinematic-bar bar-top"></div>
+        <div class="cinematic-bar bar-bottom">
+            <div class="subtitle-cn" id="sub-cn"></div>
+            <div class="subtitle-en" id="sub-en"></div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 GSAP
+        const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
+
+        // DOM 元素引用
+        const subCN = document.getElementById('sub-cn');
+        const subEN = document.getElementById('sub-en');
+        const obj = document.getElementById('obj');
+        const cube = document.getElementById('cube');
+        const shadow = document.getElementById('shadow');
+        const arrow = document.getElementById('arrow');
+        const bgGrid = document.querySelector('.bg-grid');
+
+        // 字幕更新函数
+        function setSubtitle(cn, en) {
+            subCN.innerText = cn;
+            subEN.innerText = en;
+        }
+
+        // 清空字幕
+        function clearSubtitle() {
+            subCN.innerText = "";
+            subEN.innerText = "";
+        }
+
+        // --- 动画编排 ---
+
+        // 0. 准备阶段：隐藏核心元素
+        gsap.set("#obj", { opacity: 0 });
+        
+        // 1. 开场标题 (0s - 4s)
+        tl.from(".main-title", { y: 50, opacity: 0, duration: 1.5 })
+          .from(".sub-title", { y: 20, opacity: 0, duration: 1 }, "-=1")
+          .to(".title-card", { opacity: 0, duration: 1, delay: 1.5, display: "none" });
+
+        // 2. 引入质量 m (4s - 8s)
+        tl.call(setSubtitle, ["物體不會自己移動，除非有外力。", "Objects don't move unless forced."])
+          .to("#obj", { opacity: 1, duration: 1 })
+          .from(cube, { y: -200, scale: 0, duration: 1, ease: "bounce.out" }, "<")
+          .from(shadow, { scale: 0, opacity: 0, duration: 1 }, "<")
+          
+          .call(setSubtitle, ["這個方塊代表 質量 (m)。質量即慣性。", "This box represents Mass (m). Mass is inertia."])
+          .to(cube, { scale: 1.1, duration: 0.3, yoyo: true, repeat: 1 }) // 强调一下
+          .to(".measurement", { opacity: 1, duration: 0.5 });
+
+        // 3. 引入力 F (8s - 12s)
+        tl.call(setSubtitle, ["想要改變它的状態，我们需要力 (F)。", "To change its state, we need Force (F)."])
+          .to(arrow, { width: 80, opacity: 1, duration: 1 })
+          .to(".force-label", { opacity: 1, duration: 0.5 }, "<0.5");
+
+        // 4. 产生加速度 a (12s - 17s)
+        tl.call(setSubtitle, ["力推動質量，從而產生了 加速度 (a)。", "Force pushes mass, creating Acceleration (a)."])
+          // 预备动作：挤压
+          .to(cube, { scaleX: 0.9, scaleY: 1.1, duration: 0.2 })
+          .to(shadow, { scaleX: 0.9, duration: 0.2 }, "<")
+          // 开始移动
+          .to(cube, { scaleX: 1, scaleY: 1, duration: 0.1 }) // 恢复形状
+          .to(obj, { x: 200, duration: 2, ease: "power1.in" }, "<") // 移动向右
+          .to(".bg-grid", { x: -100, duration: 2, ease: "power1.in" }, "<") // 背景反向移动增强速度感
+          // 速度线
+          .to(".wind-lines", { opacity: 1, duration: 0.5 }, "<1")
+          // 刹车
+          .to(arrow, { width: 0, opacity: 0, duration: 0.5 }) // 力消失
+          .to(".force-label", { opacity: 0, duration: 0.2 }, "<")
+          .to(obj, { x: 350, duration: 2, ease: "power4.out" }) // 惯性滑行停止
+          .to(".wind-lines", { opacity: 0, duration: 1 }, "<")
+          .to(".bg-grid", { x: -150, duration: 2, ease: "power4.out" }, "<");
+
+        // 5. 展示公式 (17s - 22s)
+        tl.call(setSubtitle, ["這就是牛顿第二運動定律的核心公式。", "This is the core formula of Newton's Second Law."])
+          .to(obj, { opacity: 0.2, filter: "blur(2px)", duration: 1 }) // 虚化背景
+          .to(".formula-text", { opacity: 1, scale: 1, duration: 1, ease: "back.out(1.7)" })
+          .from(".var-f", { y: -50, opacity: 0, duration: 0.5 }, "-=0.5")
+          .from(".var-m", { y: 50, opacity: 0, duration: 0.5 }, "-=0.4")
+          .from(".var-a", { x: 50, opacity: 0, duration: 0.5 }, "-=0.4");
+
+        // 6. 变量关系演示 - 质量变大 (22s - 30s)
+        tl.call(setSubtitle, ["如果力不变，质量越大，加速度越小。", "If Force stays same, more Mass means less Acceleration."])
+          // 重置场景
+          .to(".formula-text", { top: "10%", scale: 0.6, duration: 1 }) // 公式移上去
+          .to(obj, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.5 })
+          .set(".bg-grid", { x: 0 }) // 重置背景
+          // 变身：大质量
+          .to(cube, { 
+              backgroundColor: "#434A54", // 变深色
+              scale: 1.5, 
+              duration: 0.8 
+          })
+          .set(cube, { innerText: "2m" }) // 文字变2m
+          .to(shadow, { scale: 1.5, duration: 0.8 }, "<")
+          // 施加同样的力
+          .to(arrow, { width: 80, opacity: 1, duration: 0.5 })
+          .call(setSubtitle, ["同樣的推力，更重的物體移動得很慢。", "Same push, but the heavier object moves slowly."])
+          // 缓慢移动
+          .to(obj, { x: 100, duration: 3, ease: "power1.inOut" })
+          .to(".bg-grid", { x: -50, duration: 3, ease: "power1.inOut" }, "<")
+          .to(arrow, { width: 0, opacity: 0, duration: 0.5 });
+
+        // 7. 变量关系演示 - 需要大力 (30s - 36s)
+        tl.call(setSubtitle, ["想要讓重物快起來，就需要更大的力！", "To move it fast, you need a HUGE Force!"])
+          // 重置位置
+          .to(obj, { x: 0, duration: 1, ease: "power2.inOut" })
+          .to(".bg-grid", { x: 0, duration: 1 }, "<")
+          // 施加巨大的力
+          .to(arrow, { width: 250, height: 10, backgroundColor: "#D0021B", opacity: 1, duration: 0.5 }) // 箭头变红变大
+          .set(".force-label", { innerText: "3F", color: "#D0021B", opacity: 1 })
+          // 快速发射
+          .to(cube, { scaleX: 1.3, scaleY: 1.7, duration: 0.1 }) // 夸张变形
+          .to(obj, { x: 600, duration: 1.2, ease: "expo.in" }) // 极速飞出
+          .to(".bg-grid", { x: -400, duration: 1.2, ease: "expo.in" }, "<")
+          .to(".wind-lines", { opacity: 1, right: -100, scale: 2, duration: 0.5 }, "<")
+          
+          // 消失在屏幕外
+          .to(obj, { opacity: 0, duration: 0.2 });
+
+        // 8. 总结 (36s - End)
+        tl.call(setSubtitle, ["力 = 〞質量 × 加速度。這就是世界運動的規則。", "Force = Mass × Acceleration. The rule of motion."])
+          .to(".formula-overlay", { top: "40%", duration: 1 })
+          .to(".formula-text", { scale: 1.5, duration: 1 }, "<")
+          .to(".var-f", { color: "#D0021B", duration: 0.5 }) // 高亮F
+          .to(".var-m", { color: "#434A54", duration: 0.5 }) 
+          .to(".var-a", { color: "#48CFAD", duration: 0.5 });
+
+        // 结束定格
+        tl.add(() => {
+            gsap.to(".subtitle-cn", { opacity: 0, delay: 3 });
+            gsap.to(".subtitle-en", { opacity: 0, delay: 3 });
+        });
+
+    </script>
+</body>
+</html>
