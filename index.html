@@ -359,7 +359,7 @@
           .to(".bg-grid", { x: -150, duration: 2, ease: "power4.out" }, "<");
 
         // 5. 展示公式 (17s - 22s)
-        tl.call(setSubtitle, ["這就是牛顿第二運動定律的核心公式。", "This is the core formula of Newton's Second Law."])
+        tl.call(setSubtitle, ["這就是牛頓第二運動定律的核心公式。", "This is the core formula of Newton's Second Law."])
           .to(obj, { opacity: 0.2, filter: "blur(2px)", duration: 1 }) // 虚化背景
           .to(".formula-text", { opacity: 1, scale: 1, duration: 1, ease: "back.out(1.7)" })
           .from(".var-f", { y: -50, opacity: 0, duration: 0.5 }, "-=0.5")
@@ -367,7 +367,7 @@
           .from(".var-a", { x: 50, opacity: 0, duration: 0.5 }, "-=0.4");
 
         // 6. 变量关系演示 - 质量变大 (22s - 30s)
-        tl.call(setSubtitle, ["如果力不变，质量越大，加速度越小。", "If Force stays same, more Mass means less Acceleration."])
+        tl.call(setSubtitle, ["如果力不變，質量越大，加速度越小。", "If Force stays same, more Mass means less Acceleration."])
           // 重置场景
           .to(".formula-text", { top: "10%", scale: 0.6, duration: 1 }) // 公式移上去
           .to(obj, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.5 })
@@ -406,7 +406,7 @@
           .to(obj, { opacity: 0, duration: 0.2 });
 
         // 8. 总结 (36s - End)
-        tl.call(setSubtitle, ["力 = 〞質量 × 加速度。這就是世界運動的規則。", "Force = Mass × Acceleration. The rule of motion."])
+        tl.call(setSubtitle, ["力 = 質量 × 加速度。這就是世界運動的規則。", "Force = Mass × Acceleration. The rule of motion."])
           .to(".formula-overlay", { top: "40%", duration: 1 })
           .to(".formula-text", { scale: 1.5, duration: 1 }, "<")
           .to(".var-f", { color: "#D0021B", duration: 0.5 }) // 高亮F
